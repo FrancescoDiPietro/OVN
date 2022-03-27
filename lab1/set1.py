@@ -1,3 +1,6 @@
+import string
+
+
 def main():
     return 0
 
@@ -57,9 +60,63 @@ def ex6():
 
 
 def ex7():
-    str1 = ""
-    str2 = ""
+    str1 = "Hello programmer ! This is python"
+    str2 = "What is this again ?"
+    first_half = str1[:int(len(str1)/2)]
+    second_half = str1[int(len(str1)/2):]
+    str3 = first_half + str2 + second_half
+    print(str3)
+
+
+def ex8():
+    str1 = "Hello programmer ! This is python"
+    str2 = "What is this again ?"
+    final = "" + str1[0] + str1[int(len(str1)/2)] + str1[-1] + str2[0] + str2[int(len(str1)/2)] + str2[-1]
+    print(final)
+
+
+def ex9():
+    str1 = "Hello programmer ! This is python"
+    lower, upper, special = 0, 0, 0
+    for i in str1:
+        if i.islower():
+            lower += 1
+        elif i.isupper():
+            upper += 1
+        else:
+            special += 1
+    print(f"There are {upper} Upper case letters,\n"
+          f"{lower} lower case letters \n"
+          f"and {special} special symbols (counting spaces)")
+
+
+def ex10():
+    str1 = "USA"
+    str2 = "The Usa is the U S and A usa USA"
+    count = 0
+    for word in str2.split():
+        if word.upper() == str1:
+            count += 1
+    print(f"The string USA appears {count} times")
+
+
+def ex11():
+    str1 = "uo4T7iTiP3E6JN6pzOmn"
+    sum_numbers = 0
+    for i in str1:
+        if i.isnumeric():
+            sum_numbers += int(i)
+    print(f"The sum is {sum_numbers}")
+
+
+def ex12():
+    d = dict.fromkeys(string.ascii_lowercase, 0)
+    str1 = "JKDeRGkFfBnWZoCBGvLq"
+    for i in str1:
+        if i.isalpha():
+            d[i.lower()] += 1
+    print(d)
 
 
 if __name__ == "__main__":
-    ex6()
+    ex12()
