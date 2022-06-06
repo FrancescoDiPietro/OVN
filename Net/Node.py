@@ -4,6 +4,15 @@ class Node(object):
         self._position = node_dict['position']
         self._connected_nodes = node_dict['connected_nodes']
         self._successive = {}
+        self._transceiver = ''
+
+    @property
+    def transceiver(self):
+        return self._transceiver
+
+    @transceiver.setter
+    def transceiver(self, transceiver):
+        self._transceiver = transceiver
 
     @property
     def label(self):

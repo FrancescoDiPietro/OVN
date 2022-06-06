@@ -1,4 +1,5 @@
-from scipy.constants import c
+from scipy.constants import c, Planck
+import numpy as np
 
 
 class Line(object):
@@ -7,6 +8,57 @@ class Line(object):
         self._length = line_dict['length']
         self._successive = {}
         self._state = ['free']*10
+        self._gain = 16
+        self._noise_figure = 3
+        self._amplifiers = int(np.ceil(self._length / 80e3))
+        self._span_length = self._length / self._amplifiers
+
+        # Physical features
+        self._adb = 0.2e-3  # dB/m (alpha dB)
+        self._b2 = 2.13e-26  # (m Hz^2)^(-1) |beta2|
+        self._gamma = 1.27e-3  # (m W)^(-1)
+        self._Rs = 30e9
+        self._df = 50e9
+
+    @property
+    def adb(self):
+        return self._adb
+
+    @property
+    def b2(self):
+        return self._b2
+
+    @property
+    def gamma(self):
+        return self._gamma
+
+    @property
+    def Rs(self):
+        return self._Rs
+
+    @property
+    def df(self):
+        return self._df
+
+    @property
+    def gain(self):
+        return self._gain
+
+    @gain.setter
+    def gain(self, gain):
+        self._gain = gain
+
+    @property
+    def noise_figure(self):
+        return self._noise_figure
+
+    @property
+    def amplifiers(self):
+        return self._amplifiers
+
+    @property
+    def span_length(self):
+        return self._span_length
 
     @property
     def label(self):
@@ -35,6 +87,24 @@ class Line(object):
     @successive.setter
     def successive(self, successive):
         self._successive = successive
+
+    def nli_generation(self, signal_power, Rs, df):
+        Bn = 12.5e9  # noise bandwidth
+        N_spans = self.amplifiers
+        nnli = 0  #come cazzo si fa???
+        nil = signal_power**3 * nnli * N_spans * Bn
+
+        return nil
+
+    def ase_generation(self):
+        gain_lin = 10 ** (self._gain / 10)
+        noise_figure_lin = 10 ** (self._noise_figure / 10)
+        N =  self.amplifiers
+        f = 193.414e12
+        h = Planck
+        Bn = 12.5e9
+        ase_noise = N * h * f * Bn * noise_figure_lin * (gain_lin - 1)
+        return ase_noise
 
     def latency_generation(self):
         latency = self.length / (c * 2 / 3)

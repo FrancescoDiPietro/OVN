@@ -5,6 +5,15 @@ class Connection:
         self._signal_power = signal_power
         self._latency = 0
         self._snr = 0
+        self._bit_rate = 0
+
+    @property
+    def bit_rate(self):
+        return self._bit_rate
+
+    @bit_rate.setter
+    def bit_rate(self, bit_rate):
+        self._bit_rate = bit_rate
 
     @property
     def input_node(self):

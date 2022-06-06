@@ -2,10 +2,14 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from .Connection import Connection
 from .Line import Line
 from .SignalInformation import SignalInformation, Lightpath
 from .Node import Node
+from scipy import special as sp
+
+BER_t = 1e-3
+Bn = 12.5e9  # noise bandwidth
+Rs = 32.0e9  # symbol-rate of light path
 
 
 class Network(object):
@@ -24,6 +28,10 @@ class Network(object):
 
             node_dict['label'] = node_label  # Looks useless the label is already there ?????????
             node = Node(node_dict)  # Creates the object Node for the single nodes
+            if 'transceiver' not in node_dict.keys():
+                node.transceiver = 'fixed_rate'
+            else:
+                node.transceiver = node_dict['transceiver']
             self._nodes[node_label] = node  # Adds the node Object to the dictionary
 
             # Create the line instances
@@ -130,7 +138,7 @@ class Network(object):
         for path in all_paths:
             path1 = path.replace('->', '')
             path_occupancy = self.route_space.loc[
-                                 self.route_space.path == path1].T.values
+                self.route_space.path == path1].T.values
 
             path_occupancy = [x for l in path_occupancy for x in l]
 
@@ -151,7 +159,7 @@ class Network(object):
         for label1 in node_labels:
             for label2 in node_labels:
                 if label1 != label2: pairs.append(label1 + label2)
-        #columns = ['path', 'latency', 'noise', 'snr']
+        # columns = ['path', 'latency', 'noise', 'snr']
         df = pd.DataFrame()
         paths = []
         latencies = []
@@ -181,7 +189,7 @@ class Network(object):
         route_space = pd.DataFrame()
         route_space['path'] = paths_rs
         for i in range(10):
-            route_space[str(i)] = ['free']*len(paths)
+            route_space[str(i)] = ['free'] * len(paths)
             self._route_space = route_space
 
     def find_best_snr(self, input_node, output_node):
@@ -223,17 +231,23 @@ class Network(object):
             if path:  # in case path is not None
 
                 path_occupancy = self.route_space.loc[
-                                     self.route_space.path == path].T.values
+                    self.route_space.path == path].T.values
                 channel = [i for i in range(len(path_occupancy))
                            if path_occupancy[i] == 'free'][0]
 
-                in_signal_information = Lightpath(signal_power, path, channel)
-                out_signal_information = self.propagate(in_signal_information)
-                connection.latency = out_signal_information.latency
-                noise = out_signal_information.noise_power
-                connection.snr = 10 * np.log10(signal_power / noise)
-                self.update_route_space(path, channel)
-                streamed_connections.append(connection)
+                rb = self.calculate_bit_rate(path, self.nodes[input_node].transceiver)
+                connection.bit_rate = rb
+
+                if rb != 0:
+                    line = self.lines[output_node.label + input_node.label]
+                    in_signal_information = Lightpath(signal_power, path, channel, line.Rs, line.df)
+                    out_signal_information = self.propagate(in_signal_information)
+                    connection.latency = out_signal_information.latency
+                    noise = out_signal_information.noise_power
+                    connection.snr = 10 * np.log10(signal_power / noise)
+                    self.update_route_space(path, channel)
+                    streamed_connections.append(connection)
+
             else:
                 connection.latency = None
                 connection.snr = 0
@@ -244,6 +258,16 @@ class Network(object):
     def path_to_line_set(path):
         path = path.replace('->', '')
         return set([path[i] + path[i + 1] for i in range(len(path) - 1)])
+
+    @staticmethod
+    def line_to_path_set(path):
+        sol = []
+        for i in range(len(path) -1):
+            sol.append(path[i])
+            sol.append('->')
+        sol.append(path[-1])
+        path = ''.join(sol)
+        return path
 
     def update_route_space(self, path, channel):
         all_paths = [self.path_to_line_set(p)
@@ -256,3 +280,35 @@ class Network(object):
             if lines.intersection(line_set):
                 states[i] = 'occupied'
         self.route_space[str(channel)] = states
+
+    def calculate_bit_rate(self, path, strategy):
+        global BER_t
+        global Rs
+        global Bn
+        rb = 0
+        path = self.line_to_path_set(path)
+        GSNR_db = pd.array(self.weighted_paths.loc[self.weighted_paths['path'] == path]['snr'])[0]
+        GSNR = 10 ** (GSNR_db / 10)
+
+        if strategy == 'fixed_rate':
+            if GSNR >= 2 * sp.erfcinv(2 * BER_t) ** 2 * (Rs / Bn):
+                rb = 100
+            else:
+                rb = 0
+
+        if strategy == 'flex_rate':
+            if GSNR < 2 * sp.erfcinv(2 * BER_t) ** 2 * (Rs / Bn):
+                rb = 0
+            elif (GSNR >= 2 * sp.erfcinv(2 * BER_t) ** 2 * (Rs / Bn)) & (GSNR < (14 / 3) * sp.erfcinv(
+                    (3 / 2) * BER_t) ** 2 * (Rs / Bn)):
+                rb = 100
+            elif (GSNR >= (14 / 3) * sp.erfcinv((3 / 2) * BER_t) ** 2 * (Rs / Bn)) & (GSNR < 10 * sp.erfcinv(
+                    (8 / 3) * BER_t) ** 2 * (Rs / Bn)):
+                rb = 200
+            elif GSNR >= 10 * sp.erfcinv((8 / 3) * BER_t) ** 2 * (Rs / Bn):
+                rb = 400
+
+        if strategy == 'shannon':
+            rb = 2 * Rs * np.log2(1 + Rs * GSNR / Bn ) / 1e9
+
+        return rb
