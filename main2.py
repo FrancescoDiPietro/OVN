@@ -4,7 +4,7 @@ import numpy as np
 from Net import Network, Connection
 
 # Full Fixed
-network = Network('nodes_full_fixed_rate.json')
+network = Network('247000.json')
 network.connect()
 node_labels = list(network.nodes.keys())
 connections = []

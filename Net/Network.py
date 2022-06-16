@@ -72,14 +72,14 @@ class Network(object):
         nodes = self.nodes
         for node_label in nodes:
             n0 = nodes[node_label]
-            x0 = n0.position[0]
-            y0 = n0.position[1]
+            x0 = n0.position[0] / 1e3
+            y0 = n0.position[1] / 1e3
             plt.plot(x0, y0, 'go', markersize=10)
             plt.text(x0 + 30, y0 + 30, node_label)
             for connected_node_label in n0.connected_nodes:
                 n1 = nodes[connected_node_label]
-                x1 = n1.position[0]
-                y1 = n1.position[1]
+                x1 = n1.position[0] / 1e3
+                y1 = n1.position[1] / 1e3
                 plt.plot([x0, x1], [y0, y1], 'b')
         plt.title('Network')
         plt.show()

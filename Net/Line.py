@@ -88,15 +88,15 @@ class Line(object):
     def successive(self, successive):
         self._successive = successive
 
-    def nli_generation(self, signal_power, Rs, df):
+    def nli_generation(self, signal_power, Rs, df): # Nonlinear Interface Noise
         Bn = 12.5e9  # noise bandwidth
         N_spans = self.amplifiers
-        nnli = 0  #come cazzo si fa???
+        nnli = 0  #come si fa???
         nil = signal_power**3 * nnli * N_spans * Bn
 
         return nil
 
-    def ase_generation(self):
+    def ase_generation(self): # Amplified Spontaneous Emissions
         gain_lin = 10 ** (self._gain / 10)
         noise_figure_lin = 10 ** (self._noise_figure / 10)
         N =  self.amplifiers
@@ -110,8 +110,9 @@ class Line(object):
         latency = self.length / (c * 2 / 3)
         return latency
 
-    def noise_generation(self, signal_power):
-        noise = signal_power / (2 * self.length)
+    def noise_generation(self, lightpath):
+        # noise = signal_power / (2 * self.length)
+        noise = self.ase_generation() + self.nli_generation(lightpath.signal_power, lightpath.Rs, lightpath.df)
         return noise
 
     def propagate(self, lightpath, occupation=False):
@@ -120,8 +121,7 @@ class Line(object):
         lightpath.add_latency(latency)
 
         # Update noise
-        signal_power = lightpath.signal_power
-        noise = self.noise_generation(signal_power)
+        noise = self.noise_generation(lightpath)
         lightpath.add_noise(noise)
 
         # Update line state
