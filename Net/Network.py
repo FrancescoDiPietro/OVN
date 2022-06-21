@@ -229,6 +229,7 @@ class Network(object):
                 print('ERROR: best input not recognized.Value:', best)
                 continue
             if path:  # in case path is not None
+                print(path)
 
                 path_occupancy = self.route_space.loc[
                     self.route_space.path == path].T.values
@@ -239,8 +240,9 @@ class Network(object):
                 connection.bit_rate = rb
 
                 if rb != 0:
-                    line = self.lines[output_node.label + input_node.label]
-                    in_signal_information = Lightpath(signal_power, path, channel, line.Rs, line.df)
+                    #print(self.lines)
+                    #line = self.lines[output_node + input_node]
+                    in_signal_information = Lightpath(signal_power, path, channel)
                     out_signal_information = self.propagate(in_signal_information)
                     connection.latency = out_signal_information.latency
                     noise = out_signal_information.noise_power

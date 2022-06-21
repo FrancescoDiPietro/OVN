@@ -4,7 +4,7 @@ import numpy as np
 from Net import Network, Connection
 
 # Full Fixed
-network = Network('247000.json')
+network = Network('247000_full_fixed.json')
 network.connect()
 node_labels = list(network.nodes.keys())
 connections = []
@@ -13,6 +13,7 @@ for i in range(100):
     connection = Connection(node_labels[0],node_labels[-1],1)
     connections.append(connection)
 
+network.draw()
 streamed_connections = network.stream(connections, best='snr')
 
 bit_rate_fixed_rate = [connection.bit_rate for connection in streamed_connections]
@@ -25,7 +26,7 @@ plt.show()
 
 
 # Full Flex
-network = Network('nodes_full_flex_rate.json')
+network = Network('247000_full_flex.json')
 network.connect()
 node_labels = list(network.nodes.keys())
 connections = []
@@ -46,7 +47,7 @@ plt.show()
 
 
 # Full Shannon
-network = Network('nodes_full_shannon.json')
+network = Network('247000_full_shannon.json')
 network.connect()
 node_labels = list(network.nodes.keys())
 connections = []

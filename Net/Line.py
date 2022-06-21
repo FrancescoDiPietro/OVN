@@ -88,6 +88,11 @@ class Line(object):
     def successive(self, successive):
         self._successive = successive
 
+    def optimized_lauch_power(self, signal_power):
+        ase = self.ase_generation()
+        eta = self.nli_generation(signal_power)
+        p_opt = (ase / (2 * eta)) ** (1 / 3)  # Calculate optimum signal power
+
     def nli_generation(self, signal_power, Rs, df): # Nonlinear Interface Noise
         Bn = 12.5e9  # noise bandwidth
         N_spans = self.amplifiers
@@ -99,7 +104,7 @@ class Line(object):
     def ase_generation(self): # Amplified Spontaneous Emissions
         gain_lin = 10 ** (self._gain / 10)
         noise_figure_lin = 10 ** (self._noise_figure / 10)
-        N =  self.amplifiers
+        N = self.amplifiers
         f = 193.414e12
         h = Planck
         Bn = 12.5e9
@@ -112,7 +117,7 @@ class Line(object):
 
     def noise_generation(self, lightpath):
         # noise = signal_power / (2 * self.length)
-        noise = self.ase_generation() + self.nli_generation(lightpath.signal_power, lightpath.Rs, lightpath.df)
+        noise = self.ase_generation() + self.nli_generation(lightpath.signal_power, not self.Rs, self.df)
         return noise
 
     def propagate(self, lightpath, occupation=False):
@@ -141,8 +146,8 @@ class Line(object):
         signal_information.add_latency(latency)
 
         # Update noise
-        signal_power = signal_information.signal_power
-        noise = self.noise_generation(signal_power)
+        #signal_power = signal_information.signal_power
+        noise = self.noise_generation(signal_information)
         signal_information.add_noise(noise)
 
         node = self.successive[signal_information.path[0]]  # Finds next Node
