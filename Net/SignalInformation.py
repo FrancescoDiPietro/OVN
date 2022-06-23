@@ -20,6 +20,10 @@ class Lightpath(object):
     def signal_power(self):
         return self._signal_power
 
+    @signal_power.setter
+    def signal_power(self, signal_power):
+        self._signal_power = signal_power
+
     @property
     def channel(self):
         return self._channel
