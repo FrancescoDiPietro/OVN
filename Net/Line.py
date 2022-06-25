@@ -12,6 +12,7 @@ class Line(object):
         self._noise_figure = 3
         self._amplifiers = int(np.ceil(self._length / 80e3))
         self._span_length = self._length / self._amplifiers
+        self._in_service = 1
 
 
         # Physical features
@@ -22,6 +23,14 @@ class Line(object):
         self._df = 50e9
         self._Bn = 12.5e9  # noise bandwidth
         self.f = 193.414e12
+
+    @property
+    def in_service(self):
+        return self._in_service
+
+    @in_service.setter
+    def in_service(self, in_service):
+        self._in_service = in_service
 
     @property
     def adb(self):

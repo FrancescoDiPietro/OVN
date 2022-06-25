@@ -8,46 +8,95 @@ network_fixed = Network('247000_full_fixed.json')
 network_shannon = Network('247000_full_shannon.json')
 
 network_fixed.connect()
+network_flexed.connect()
+network_shannon.connect()
 
-network_fixed.draw()
+#network_fixed.draw()
 
 node_labels_fixed = list(network_fixed.nodes.keys())
+node_labels_flexed = list(network_flexed.nodes.keys())
+node_labels_shannon = list(network_shannon.nodes.keys())
 connections = []
 # --------------------------------------------------------------------------------------------------
-su_connections = []
+su_connections_flex = []
+su_connections_fixed = []
+su_connections_shannon = []
 
 for i in range(100):
     shuffle(node_labels_fixed)
     connection = Connection(node_labels_fixed[0], node_labels_fixed[-1], 1)
     connections.append(connection)
 
+# for j in range(100):
+#     network_fixed.traffic_matrix = network_fixed.create_traffic_matrix(j + 1)
+#     network_fixed.stream2(connections, best='snr')
+#     print(j)
+#     su_connections_fixed.append(network_fixed.suc_connections)
+#     if network_fixed.suc_connections == 100:
+#         break
+#
 for j in range(100):
-    network_fixed.traffic_matrix = network_fixed.create_traffic_matrix(j + 1)
-    network_fixed.stream2(connections, best='snr')
+    network_flexed.traffic_matrix = network_flexed.create_traffic_matrix(j + 1)
+    network_flexed.stream2(connections, best='snr')
     print(j)
-    su_connections.append(network_fixed.suc_connections)
-    if network_fixed.suc_connections == 100:
+    su_connections_flex.append(network_flexed.suc_connections)
+    if network_flexed.suc_connections == 100:
         break
 
-plt.plot(su_connections)
-plt.title('Saturation Fixed Rate')
+# for j in range(100):
+#     network_shannon.traffic_matrix = network_shannon.create_traffic_matrix(j + 1)
+#     network_shannon.stream2(connections, best='snr')
+#     print(j)
+#     su_connections_shannon.append(network_shannon.suc_connections)
+#     if network_shannon.suc_connections == 100:
+#         break
+#
+plt.plot(su_connections_flex)
+# plt.plot(su_connections_fixed)
+# plt.plot(su_connections_shannon)
+# plt.legend(('flexed', 'fixed', 'shannon'),
+#            loc='lower right')
+plt.title('Saturation Rate Flexed')
 plt.xlabel('M')
 plt.ylabel('number of saturated requests')
 plt.show()
 
 # --------------------------------------------------------------------------------------------------
 
-# print(su_connections)
-#
-# network_flexed.connect()
-# network_shannon.connect()
-#
-# network_fixed.draw()
+# --------------------------------------------------------------------------------------------------
 #
 # for i in range(100):
 #     shuffle(node_labels_fixed)
 #     connection = Connection(node_labels_fixed[0],node_labels_fixed[-1],1)
 #     connections.append(connection)
+#
+# streamed_connections_fixed = network_fixed.stream(connections, best='snr')
+# bit_rate_fixed_rate = [connection.bit_rate for connection in streamed_connections_fixed]
+#
+# streamed_connections_flexed = network_flexed.stream(connections, best='snr')
+# bit_rate_flexed_rate = [connection.bit_rate for connection in streamed_connections_flexed]
+#
+# streamed_connections_shannon = network_shannon.stream(connections, best='snr')
+# bit_rate_shannon_rate = [connection.bit_rate for connection in streamed_connections_shannon]
+#
+# bins = np.linspace(0, 1500, 100)
+#
+# plt.hist(bit_rate_fixed_rate)
+# plt.hist(bit_rate_flexed_rate)
+# plt.hist(bit_rate_shannon_rate)
+# plt.legend(('flexed', 'fixed', 'shannon'), loc='lower right')
+# plt.title('BitRate all rates')
+# plt.xlabel('Gbps')
+# plt.show()
+
+# --------------------------------------------------------------------------------------------------
+
+# for i in range(100):
+#     shuffle(node_labels_fixed)
+#     connection = Connection(node_labels_fixed[0],node_labels_fixed[-1],1)
+#     connections.append(connection)
+#
+# network_fixed.draw()
 #
 # # signal to Noise Ratio
 # streamed_connections = network_fixed.stream(connections, best='snr')
@@ -78,12 +127,17 @@ plt.show()
 #
 # bit_rate_fixed_rate = [connection.bit_rate for connection in streamed_connections]
 #
+# tot = sum(bit_rate_fixed_rate)
+# print(f"Shannon tot capacity is: {tot}")
+#
 # plt.hist(bit_rate_fixed_rate, label='fixed-rate')
 # plt.title('BitRate Full fixed-rate')
 # plt.xlabel('Gbps')
 # plt.show()
 #
-#
+# print(network_fixed.logger)
+
+
 # # Full Flex
 # node_labels_flex = list(network_flexed.nodes.keys())
 # connections = []
@@ -95,6 +149,9 @@ plt.show()
 # streamed_connections = network_flexed.stream(connections, best='snr')
 #
 # bit_rate_flexed_rate = [connection.bit_rate for connection in streamed_connections]
+#
+# tot = sum(bit_rate_flexed_rate)
+# print(f"Shannon tot capacity is: {tot}")
 #
 # plt.hist(bit_rate_flexed_rate, label='flex-rate')
 # plt.title('BitRate Full flex-rate')
@@ -113,6 +170,10 @@ plt.show()
 # streamed_connections = network_shannon.stream(connections ,best='snr')
 #
 # bit_rate_shannon_rate = [connection.bit_rate for connection in streamed_connections]
+# tot = sum(bit_rate_shannon_rate)
+# avg = tot / len(bit_rate_shannon_rate)
+# print(f"Shannon tot capacity is: {tot}")
+# print(f"Shannon average is: {avg}")
 #
 # plt.hist(bit_rate_shannon_rate, label='shannon-rate')
 # plt.title('BitRate Full shannon-rate')

@@ -8,6 +8,7 @@ from .Node import Node
 from .Connection import Connection
 from scipy import special as sp
 from random import shuffle
+from datetime import datetime
 
 
 BER_t = 1e-3
@@ -25,6 +26,7 @@ class Network(object):
         self._route_space = None
         self._traffic_matrix = 0
         self._suc_connections = 0
+        self._logger = pd.DataFrame(columns=['epoch_time', 'path', 'channel_ID', 'br'])  # pd.DataFrame(columns=['epoch_time', 'path', 'channel_ID', 'br'])
 
         for node_label in node_json:
             # Create the node instance
@@ -52,6 +54,14 @@ class Network(object):
                 line_dict['length'] = np.sqrt(np.sum((node_position - connected_node_position) ** 2))
                 line = Line(line_dict)  # Creates the line object
                 self._lines[line_label] = line  # Adds the object to the dictionary
+
+    @property
+    def logger(self):
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
+        self._logger = logger
 
     @property
     def weighted_paths(self):
@@ -245,7 +255,13 @@ class Network(object):
             else:
                 print('ERROR: best input not recognized.Value:', best)
                 continue
-            if path:  # in case path is not None
+            flag = True
+
+            for i in range(len(path)-1):
+                if not self.lines[path[i]+path[i+1]].in_service:
+                    flag = False
+
+            if path and flag:  # in case path is not None
 
                 path_occupancy = self.route_space.loc[
                     self.route_space.path == path].T.values
@@ -262,7 +278,7 @@ class Network(object):
                     connection.latency = out_signal_information.latency
                     noise = out_signal_information.noise_power
                     connection.snr = 10 * np.log10(signal_power / noise)
-                    self.update_route_space(path, channel)
+                    self.update_route_space(path, channel, rb)
                     streamed_connections.append(connection)
 
             else:
@@ -286,7 +302,7 @@ class Network(object):
         path = ''.join(sol)
         return path
 
-    def update_route_space(self, path, channel):
+    def update_route_space(self, path, channel, rb):
         all_paths = [self.path_to_line_set(p)
                      for p in self.route_space.path.values]
 
@@ -298,6 +314,7 @@ class Network(object):
                 states[i] = 'occupied'
 
         self.route_space[str(channel)] = states
+        self.update_logger([datetime.timestamp(datetime.now()), path, channel, rb])
 
     def calculate_bit_rate(self, lightpath, strategy):
         global BER_t
@@ -362,7 +379,7 @@ class Network(object):
                     connection.latency = out_signal_information.latency
                     noise = out_signal_information.noise_power
                     connection.snr = 10 * np.log10(signal_power / noise)
-                    self.update_route_space(path, channel)
+                    self.update_route_space(path, channel, signal_power)
                     streamed_connections.append(connection)
 
                     self.allowed_connection(input_node,output_node,rb) # Matrix calculation
@@ -398,4 +415,11 @@ class Network(object):
         if rb <= self.traffic_matrix[input_node][output_node]:
             self.traffic_matrix[input_node][output_node] -= rb
             self._suc_connections += 1
+
+    def update_logger(self, data):
+        df = pd.DataFrame([data], columns=['epoch_time', 'path', 'channel_ID', 'br'])
+        self.logger = pd.concat([self.logger, df], ignore_index=True)
+
+    def strong_failure(self, label):
+        self.lines[label].in_service = 0
 
