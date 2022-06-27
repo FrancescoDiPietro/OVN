@@ -9,17 +9,17 @@ class Line(object):
         self._successive = {}
         self._state = ['free']*10
         self._gain = 16
-        self._noise_figure = 3
-        self._amplifiers = int(np.ceil(self._length / 80e3))
+        self._noise_figure = 3  # 5
+        self._amplifiers = int(self._length / 80e3)
         self._span_length = self._length / self._amplifiers
         self._in_service = 1
 
 
         # Physical features
         self._adb = 0.2e-3  # dB/m (alpha dB)
-        self._b2 = 2.13e-26  # (m Hz^2)^(-1) |beta2|
+        self._b2 = 2.13e-26  # 0.6e-26  # (m Hz^2)^(-1) |beta2|
         self._gamma = 1.27e-3  # (m W)^(-1)
-        self._Rs = 30e9
+        self._Rs = 32e9
         self._df = 50e9
         self._Bn = 12.5e9  # noise bandwidth
         self.f = 193.414e12
@@ -105,14 +105,14 @@ class Line(object):
         self._successive = successive
 
 # --------------------------------------------------------------------------------------------------------------
-    def nli_generation(self, signal_power):
+    def nli_generation(self, signal_power):  # Calculates the nonlinear interference
         Bn = 12.5e9  # noise bandwidth
-        nli = signal_power**3 * self.calculate_nli() * Bn * 10**(-self.adb * self.length/10) * 10**(self.gain/10) #np.abs(self.alpha / (10 * np.log10(cs.e))) * 80e3
+        nli = signal_power**3 * self.calculate_nli() * Bn * (self.amplifiers - 1)  # 10**(-self.adb * self.length/10) * 10**(self.gain/10)  # np.abs(self.alpha / (10 * np.log10(cs.e))) * 80e3
         return nli
 
-    def calculate_nli(self) -> float: # slide 16 of OLS(8)
+    def calculate_nli(self) -> float:  # slide 16 of OLS(8)
         alpha = np.abs(self.adb / (10 * np.log10(e)))
-        log_arg = pi**2 * self.b2 * self.Rs**2 * len(self.state)**(2 * self.Rs/self.df)/(2* alpha)  # argument of log
+        log_arg = pi**2 * self.b2 * self.Rs**2 * len(self.state)**(2 * self.Rs/self.df)/(2 * alpha)  # argument of log
         factor = 16/(27 * pi) * self.gamma**2 / (4 * alpha * self.b2 * self.Rs**3)     # the other factor
         nli = factor * np.log(log_arg)
         return nli
@@ -122,7 +122,7 @@ class Line(object):
 
 # --------------------------------------------------------------------------------------------------------------
 
-    def ase_generation(self): # Amplified Spontaneous Emissions
+    def ase_generation(self):  # Amplified Spontaneous Emissions generation
         gain_lin = 10 ** (self._gain / 10)
         noise_figure_lin = 10 ** (self._noise_figure / 10)
         N = self.amplifiers
@@ -137,7 +137,7 @@ class Line(object):
         return latency
 
     def noise_generation(self, lightpath):
-        # noise = signal_power / (2 * self.length)
+        # noise = lightpath.signal_power / (2 * self.length)
         noise = self.ase_generation() + self.nli_generation(lightpath.signal_power)
         return noise
 

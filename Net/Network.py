@@ -111,6 +111,7 @@ class Network(object):
         plt.title('Network')
         plt.show()
 
+    # propagates the lightpath to the first node who the keeps propagating it until it reaches destination
     def propagate(self, lightpath, occupation=False):
         path = lightpath.path
         start_node = self.nodes[path[0]]
@@ -323,8 +324,7 @@ class Network(object):
         rb = 0
         path = self.line_to_path_set(lightpath.path)
         GSNR_db = pd.array(self.weighted_paths.loc[self.weighted_paths['path'] == path]['snr'])[0]
-        GSNR = 10 ** (GSNR_db / 10)
-
+        GSNR = 10 ** (-GSNR_db / 10)
         if strategy == 'fixed_rate':
             if GSNR >= 2 * sp.erfcinv(2 * BER_t) ** 2 * (Rs / Bn):
                 rb = 100

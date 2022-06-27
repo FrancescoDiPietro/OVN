@@ -5,7 +5,7 @@ class Lightpath(object):
         self._noise_power = 0
         self._latency = 0
         self._channel = channel
-        self._Rs = 30e9
+        self._Rs = 32e9
         self._df = 50e9
 
     @property
@@ -58,7 +58,7 @@ class Lightpath(object):
     def add_latency(self, latency):
         self.latency += latency
 
-    def next(self):
+    def next(self):  # modifies the path deleting index 0
         self.path = self.path[1:]
 
 
